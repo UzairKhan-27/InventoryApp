@@ -24,4 +24,28 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+    [HttpGet("{id}")]
+    public ActionResult<Product> GetProduct(Guid id)
+    {   
+        var product = dbContext.Products.Find(id);
+        if (product == null)
+        {
+            return NotFound(id);
+        }
+        return Ok(product);
+    }
+
+    [HttpPost]
+    public ActionResult<Product> AddProduct([FromBody] AddProductDto addProductDto)
+    {
+        var product = new Product()
+        {
+            Name = addProductDto.Name,
+            Price = addProductDto.Price
+        };
+        dbContext.Products.Add(product);
+        dbContext.SaveChanges();
+        return Ok(product);
+    }
+
 }

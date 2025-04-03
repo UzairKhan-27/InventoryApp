@@ -13,7 +13,6 @@ public class StockMovement
     public DateTime Timestamp { get; set; } = DateTime.Now;
     [JsonIgnore]
     public Product Product { get; set;}
-    //check git 
 
 
 }

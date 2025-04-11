@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InventoryApp.Services;
 
-public class ProductService
+public class ProductsService
 {
     private readonly ProductContext _context;
 
-    public ProductService(ProductContext context)
+    public ProductsService(ProductContext context)
     {
         _context = context;
     }

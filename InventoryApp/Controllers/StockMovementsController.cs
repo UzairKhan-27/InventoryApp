@@ -1,20 +1,16 @@
-﻿using InventoryApp.Data;
-using InventoryApp.Models;
-using Microsoft.AspNetCore.Http;
+﻿using InventoryApp.Models;
+using InventoryApp.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
-namespace InventoryApp.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
 public class StockMovementsController : ControllerBase
 {
-    private readonly ProductContext dbContext;
+    private readonly StockMovementsService _service;
 
-    public StockMovementsController(ProductContext dbContext)
+    public StockMovementsController(StockMovementsService service)
     {
-        this.dbContext = dbContext;
+        _service = service;
     }
 
     [HttpGet]
@@ -22,12 +18,12 @@ public class StockMovementsController : ControllerBase
     {
         try
         {
-            var stockMovements = await dbContext.StockMovements.ToListAsync();
+            var stockMovements = await _service.GetStockMovements();
             return Ok(stockMovements);
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving stock movements.");
+            return StatusCode(500, "An error occurred while retrieving stock movements.");
         }
     }
 
@@ -36,60 +32,28 @@ public class StockMovementsController : ControllerBase
     {
         try
         {
-            var stockMovement = await dbContext.StockMovements.FindAsync(id);
-            if (stockMovement == null)
-            {
-                return NotFound($"Stock movement with ID {id} not found.");
-            }
-            return Ok(stockMovement);
+            var stockMovement = await _service.GetStockMovement(id);
+            return stockMovement == null
+                ? NotFound($"Stock movement with ID {id} not found.")
+                : Ok(stockMovement);
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the stock movement.");
+            return StatusCode(500, "An error occurred while retrieving the stock movement.");
         }
     }
 
     [HttpPost]
-    public async Task<ActionResult<StockMovement>> AddStockMovement([FromBody] AddStockMovementDto addStockMovementDto)
+    public async Task<ActionResult<StockMovement>> AddStockMovement([FromBody] AddStockMovementDto dto)
     {
         try
         {
-            var product = await dbContext.Products.FindAsync(addStockMovementDto.ProductId);
-            if (product == null || product.IsDeleted)
-            {
-                return NotFound($"Product with ID {addStockMovementDto.ProductId} not found.");
-            }
-
-            var stockMovement = new StockMovement()
-            {
-                ProductId = addStockMovementDto.ProductId,
-                Type = addStockMovementDto.Type,
-                Count = addStockMovementDto.Count
-            };
-
-            switch (stockMovement.Type)
-            {
-                case "stocked in":
-                    product.Quantity += stockMovement.Count;
-                    break;
-                case "sold":
-                case "removed":
-                    product.Quantity -= stockMovement.Count;
-                    break;
-                default:
-                    return BadRequest("Invalid stock movement type. Please choose between 'stocked in', 'sold' or 'removed'.");
-            }
-
-            product.UpdatedAt = DateTime.UtcNow;
-            await dbContext.StockMovements.AddAsync(stockMovement);
-            await dbContext.SaveChangesAsync();
-
-
-            return Ok(stockMovement);
+            var (isSuccess, message, movement) = await _service.AddStockMovement(dto);
+            return isSuccess ? Ok(movement) : BadRequest(message);
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while adding the stock movement.");
+            return StatusCode(500, "An error occurred while adding the stock movement.");
         }
     }
 }

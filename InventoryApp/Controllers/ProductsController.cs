@@ -11,9 +11,9 @@ namespace InventoryApp.Controllers;
 [ApiController]
 public class ProductsController : ControllerBase
 {
-    private readonly ProductService _service;
+    private readonly ProductsService _service;
 
-    public ProductsController(ProductService service)
+    public ProductsController(ProductsService service)
     {
         _service = service;
     }
@@ -21,35 +21,70 @@ public class ProductsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<Product>>> GetProducts()
     {
-        var products = await _service.GetProducts();
-        return Ok(products);
+        try
+        {
+            var products = await _service.GetProducts();
+            return Ok(products);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "An error occurred while retrieving products.");
+        }
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Product>> GetProduct(Guid id)
     {
-        var product = await _service.GetProduct(id);
-        return product == null ? NotFound($"Product with {id} not found") : Ok(product);
+        try
+        {
+            var product = await _service.GetProduct(id);
+            return product == null ? NotFound($"Product with {id} not found") : Ok(product);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving product with ID {id}.");
+        }
     }
 
     [HttpPost]
     public async Task<ActionResult<Product>> AddProduct([FromBody] AddProductDto dto)
     {
-        var product = await _service.AddProduct(dto);
-        return Ok(product);
+        try
+        {
+            var product = await _service.AddProduct(dto);
+            return Ok(product);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "An error occurred while adding the product.");
+        }
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<Product>> UpdateProduct(Guid id, [FromBody] UpdateProductDto dto)
     {
-        var product = await _service.UpdateProduct(id, dto);
-        return product == null ? NotFound($"Product with {id} not found") : Ok(product);
+        try
+        {
+            var product = await _service.UpdateProduct(id, dto);
+            return product == null ? NotFound($"Product with {id} not found") : Ok(product);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while updating product with ID {id}.");
+        }
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteProduct(Guid id)
     {
-        var (isSuccess, message) = await _service.DeleteProduct(id);
-        return isSuccess ? Ok(message) : BadRequest(message);
+        try
+        {
+            var (isSuccess, message) = await _service.DeleteProduct(id);
+            return isSuccess ? Ok(message) : BadRequest(message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while deleting product with ID {id}.");
+        }
     }
 }

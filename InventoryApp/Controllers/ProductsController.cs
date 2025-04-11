@@ -68,4 +68,55 @@ public class ProductsController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while adding the product.");
         }
     }
+    [HttpPut("{id}")]
+    public async Task<ActionResult<Product>> UpdateProduct(Guid id, [FromBody] UpdateProductDto updateProductDto)
+    {
+        try
+        {
+            var product = await dbContext.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound($"Product with ID {id} not found.");
+            }
+
+            product.Name = updateProductDto.Name;
+            product.Price = updateProductDto.Price;
+            product.UpdatedAt = DateTime.UtcNow;
+
+            await dbContext.SaveChangesAsync();
+            return Ok(product);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the product.");
+        }
+    }
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<Product>> DeleteProduct(Guid id)
+    {
+        try
+        {
+            var product = await dbContext.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound($"Product with ID {id} not found.");
+            }
+
+            if (product.Quantity > 0)
+            {
+                return BadRequest("Cannot delete product with remaining stock. Please remove the stock first.");
+            }
+
+            dbContext.Products.Remove(product);
+            await dbContext.SaveChangesAsync();
+
+            return Ok(product);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the product.");
+        }
+    }
+
+
 }

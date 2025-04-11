@@ -80,8 +80,10 @@ public class StockMovementsController : ControllerBase
                     return BadRequest("Invalid stock movement type. Please choose between 'stocked in', 'sold' or 'removed'.");
             }
 
+            product.UpdatedAt = DateTime.UtcNow;
             await dbContext.StockMovements.AddAsync(stockMovement);
             await dbContext.SaveChangesAsync();
+
 
             return Ok(stockMovement);
         }

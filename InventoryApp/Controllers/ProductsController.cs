@@ -22,7 +22,7 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var products = await dbContext.Products.ToListAsync();
+            var products = await dbContext.Products.Where(p=>!p.IsDeleted).ToListAsync();
             return Ok(products);
         }
         catch (Exception ex)
@@ -37,7 +37,7 @@ public class ProductsController : ControllerBase
         try
         {
             var product = await dbContext.Products.FindAsync(id);
-            if (product == null)
+            if (product == null || product.IsDeleted)
             {
                 return NotFound($"Product with ID {id} not found.");
             }
@@ -74,7 +74,7 @@ public class ProductsController : ControllerBase
         try
         {
             var product = await dbContext.Products.FindAsync(id);
-            if (product == null)
+            if (product == null || product.IsDeleted)
             {
                 return NotFound($"Product with ID {id} not found.");
             }
@@ -97,7 +97,7 @@ public class ProductsController : ControllerBase
         try
         {
             var product = await dbContext.Products.FindAsync(id);
-            if (product == null)
+            if (product == null || product.IsDeleted)
             {
                 return NotFound($"Product with ID {id} not found.");
             }
@@ -107,16 +107,18 @@ public class ProductsController : ControllerBase
                 return BadRequest("Cannot delete product with remaining stock. Please remove the stock first.");
             }
 
-            dbContext.Products.Remove(product);
+            product.IsDeleted = true;
+            product.UpdatedAt = DateTime.UtcNow;
             await dbContext.SaveChangesAsync();
 
             return Ok(product);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the product.");
         }
     }
+
 
 
 }

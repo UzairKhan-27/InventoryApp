@@ -55,7 +55,7 @@ public class StockMovementsController : ControllerBase
         try
         {
             var product = await dbContext.Products.FindAsync(addStockMovementDto.ProductId);
-            if (product == null)
+            if (product == null || product.IsDeleted)
             {
                 return NotFound($"Product with ID {addStockMovementDto.ProductId} not found.");
             }

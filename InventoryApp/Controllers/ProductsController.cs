@@ -1,5 +1,6 @@
 ﻿using InventoryApp.Data;
 using InventoryApp.Models;
+using InventoryApp.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,115 +11,45 @@ namespace InventoryApp.Controllers;
 [ApiController]
 public class ProductsController : ControllerBase
 {
-    private readonly ProductContext dbContext;
+    private readonly ProductService _service;
 
-    public ProductsController(ProductContext dbContext)
+    public ProductsController(ProductService service)
     {
-        this.dbContext = dbContext;
+        _service = service;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<Product>>> GetProducts()
     {
-        try
-        {
-            var products = await dbContext.Products.Where(p=>!p.IsDeleted).ToListAsync();
-            return Ok(products);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving products.");
-        }
+        var products = await _service.GetProducts();
+        return Ok(products);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Product>> GetProduct(Guid id)
     {
-        try
-        {
-            var product = await dbContext.Products.FindAsync(id);
-            if (product == null || product.IsDeleted)
-            {
-                return NotFound($"Product with ID {id} not found.");
-            }
-            return Ok(product);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the product.");
-        }
+        var product = await _service.GetProduct(id);
+        return product == null ? NotFound($"Product with {id} not found") : Ok(product);
     }
 
     [HttpPost]
-    public async Task<ActionResult<Product>> AddProduct([FromBody] AddProductDto addProductDto)
+    public async Task<ActionResult<Product>> AddProduct([FromBody] AddProductDto dto)
     {
-        try
-        {
-            var product = new Product()
-            {
-                Name = addProductDto.Name,
-                Price = addProductDto.Price
-            };
-            await dbContext.Products.AddAsync(product);
-            await dbContext.SaveChangesAsync();
-            return Ok(product);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while adding the product.");
-        }
+        var product = await _service.AddProduct(dto);
+        return Ok(product);
     }
+
     [HttpPut("{id}")]
-    public async Task<ActionResult<Product>> UpdateProduct(Guid id, [FromBody] UpdateProductDto updateProductDto)
+    public async Task<ActionResult<Product>> UpdateProduct(Guid id, [FromBody] UpdateProductDto dto)
     {
-        try
-        {
-            var product = await dbContext.Products.FindAsync(id);
-            if (product == null || product.IsDeleted)
-            {
-                return NotFound($"Product with ID {id} not found.");
-            }
-
-            product.Name = updateProductDto.Name;
-            product.Price = updateProductDto.Price;
-            product.UpdatedAt = DateTime.UtcNow;
-
-            await dbContext.SaveChangesAsync();
-            return Ok(product);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the product.");
-        }
+        var product = await _service.UpdateProduct(id, dto);
+        return product == null ? NotFound($"Product with {id} not found") : Ok(product);
     }
+
     [HttpDelete("{id}")]
-    public async Task<ActionResult<Product>> DeleteProduct(Guid id)
+    public async Task<ActionResult> DeleteProduct(Guid id)
     {
-        try
-        {
-            var product = await dbContext.Products.FindAsync(id);
-            if (product == null || product.IsDeleted)
-            {
-                return NotFound($"Product with ID {id} not found.");
-            }
-
-            if (product.Quantity > 0)
-            {
-                return BadRequest("Cannot delete product with remaining stock. Please remove the stock first.");
-            }
-
-            product.IsDeleted = true;
-            product.UpdatedAt = DateTime.UtcNow;
-            await dbContext.SaveChangesAsync();
-
-            return Ok(product);
-        }
-        catch (Exception)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the product.");
-        }
+        var (isSuccess, message) = await _service.DeleteProduct(id);
+        return isSuccess ? Ok(message) : BadRequest(message);
     }
-
-
-
 }

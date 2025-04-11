@@ -11,9 +11,8 @@ namespace InventoryApp.Controllers;
 [ApiController]
 public class ProductsController : ControllerBase
 {
-    private readonly ProductsService _service;
-
-    public ProductsController(ProductsService service)
+    private readonly IProductsService _service;
+    public ProductsController(IProductsService service)
     {
         _service = service;
     }

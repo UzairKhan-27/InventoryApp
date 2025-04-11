@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InventoryApp.Services;
 
-public class ProductsService
+public class ProductsService : IProductsService
 {
     private readonly ProductContext _context;
 
@@ -39,7 +39,7 @@ public class ProductsService
     public async Task<Product?> UpdateProduct(Guid id, UpdateProductDto dto)
     {
         var product = await _context.Products.FindAsync(id);
-        if (product == null || product.IsDeleted) 
+        if (product == null || product.IsDeleted)
             return null;
 
         product.Name = dto.Name;

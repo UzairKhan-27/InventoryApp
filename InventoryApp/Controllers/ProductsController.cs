@@ -18,34 +18,54 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<List<Product>> GetProducts()
+    public async Task<ActionResult<List<Product>>> GetProducts()
     {
-        var products = dbContext.Products.ToList();
-        return Ok(products);
+        try
+        {
+            var products = await dbContext.Products.ToListAsync();
+            return Ok(products);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving products.");
+        }
     }
 
     [HttpGet("{id}")]
-    public ActionResult<Product> GetProduct(Guid id)
-    {   
-        var product = dbContext.Products.Find(id);
-        if (product == null)
+    public async Task<ActionResult<Product>> GetProduct(Guid id)
+    {
+        try
         {
-            return NotFound(id);
+            var product = await dbContext.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound($"Product with ID {id} not found.");
+            }
+            return Ok(product);
         }
-        return Ok(product);
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the product.");
+        }
     }
 
     [HttpPost]
-    public ActionResult<Product> AddProduct([FromBody] AddProductDto addProductDto)
+    public async Task<ActionResult<Product>> AddProduct([FromBody] AddProductDto addProductDto)
     {
-        var product = new Product()
+        try
         {
-            Name = addProductDto.Name,
-            Price = addProductDto.Price
-        };
-        dbContext.Products.Add(product);
-        dbContext.SaveChanges();
-        return Ok(product);
+            var product = new Product()
+            {
+                Name = addProductDto.Name,
+                Price = addProductDto.Price
+            };
+            await dbContext.Products.AddAsync(product);
+            await dbContext.SaveChangesAsync();
+            return Ok(product);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while adding the product.");
+        }
     }
-
 }

@@ -15,7 +15,7 @@ builder.Services.AddDbContext<ProductContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IProductsService,ProductsService>();
-builder.Services.AddScoped<StockMovementsService>();
+builder.Services.AddScoped<IStockMovementsService, StockMovementsService>();
 
 
 

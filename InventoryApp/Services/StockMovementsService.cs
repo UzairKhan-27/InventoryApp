@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InventoryApp.Services;
 
-public class StockMovementsService
+public class StockMovementsService : IStockMovementsService
 {
     private readonly ProductContext _context;
 

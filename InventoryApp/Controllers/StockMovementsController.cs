@@ -6,9 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 public class StockMovementsController : ControllerBase
 {
-    private readonly StockMovementsService _service;
-
-    public StockMovementsController(StockMovementsService service)
+    private readonly IStockMovementsService _service;
+    public StockMovementsController(IStockMovementsService service)
     {
         _service = service;
     }

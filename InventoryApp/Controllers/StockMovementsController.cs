@@ -47,12 +47,32 @@ public class StockMovementsController : ControllerBase
     {
         try
         {
-            var (isSuccess, message, movement) = await _service.AddStockMovement(dto);
-            return isSuccess ? Ok(movement) : BadRequest(message);
+            var (isSuccess, message, stockMovement) = await _service.AddStockMovement(dto);
+            return isSuccess ? Ok(stockMovement) : BadRequest(message);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, "An error occurred while adding the stock movement.");
+            return StatusCode(500, "An error occurred while adding stock movement.");
         }
     }
+    [HttpGet("filter")]
+    public async Task<ActionResult<List<StockMovement>>> GetFilteredStockMovements
+        ([FromQuery] Guid? storeId,[FromQuery] DateTime? startDate,[FromQuery] DateTime? endDate)
+    {
+        try
+        {
+            var result = await _service.GetFilteredStockMovements(storeId, startDate, endDate);
+
+            if (!result.found)
+                return NotFound(result.message);
+
+            return Ok(result.stockMovement);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "An error occurred while retrieving filtered stock movements.");
+        }
+    }
+
+
 }

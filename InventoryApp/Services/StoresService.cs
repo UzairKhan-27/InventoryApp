@@ -1,0 +1,64 @@
+﻿using InventoryApp.Data;
+using InventoryApp.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace InventoryApp.Services;
+
+public class StoresService : IStoresService
+{
+    private readonly ProductContext _context;
+
+    public StoresService(ProductContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<List<Store>> GetAllStores()
+    {
+        return await _context.Stores.Where(s => !s.IsDeleted).ToListAsync();
+    }
+
+    public async Task<Store?> GetStore(Guid id)
+    {
+        return await _context.Stores.FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+    }
+
+    public async Task<Store> AddStore(AddStoreDto dto)
+    {
+        var store = new Store
+        {
+            Name = dto.Name,
+            Location = dto.Location
+        };
+
+        await _context.Stores.AddAsync(store);
+        await _context.SaveChangesAsync();
+        return store;
+    }
+    public async Task<Store?> UpdateStore(Guid id, UpdateStoreDto dto)
+    {
+        var store = await _context.Stores.FindAsync(id);
+        if (store == null || store.IsDeleted)
+            return null;
+
+        store.Name = dto.Name;
+        store.Location = dto.Location;
+
+        await _context.SaveChangesAsync();
+        return store;
+    }
+    public async Task<(bool IsSuccess, string Message)> DeleteStore(Guid id)
+    {
+        var store = await _context.Stores.FindAsync(id);
+        if (store == null || store.IsDeleted)
+            return (false, $"Store with ID {id} not found");
+
+        store.IsDeleted = true;
+        await _context.SaveChangesAsync();
+
+        return (true, $"Store with ID {id} deleted");
+    }
+
+
+
+}

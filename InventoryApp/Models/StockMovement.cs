@@ -10,7 +10,7 @@ public class StockMovement
     [RegularExpression("^(stocked in|sold|removed)$", ErrorMessage = "Choose between stocked in, sold and removed")]
     public string Type { get; set; }
     public int Count { get; set; }
-    public DateTime Timestamp { get; set; } = DateTime.Now;
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     [JsonIgnore]
     public Product Product { get; set; }
     [JsonIgnore]

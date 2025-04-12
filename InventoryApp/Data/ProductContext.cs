@@ -12,6 +12,8 @@ public class ProductContext : DbContext
     public DbSet<StockMovement> StockMovements { get; set; }
     public DbSet<Store> Stores { get; set; }
     public DbSet<StoreInventory> StoreInventories { get; set; }
+    public DbSet<User> Users { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

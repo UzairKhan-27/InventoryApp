@@ -56,14 +56,14 @@ public class StockMovementsService : IStockMovementsService
         switch (type)
         {
             case "stocked in":
-                product.Quantity += count;
+                /*product.Quantity += count;*/
                 return (true, null);
 
             case "sold":
             case "removed":
-                if (count > product.Quantity)
+                /*if (count > product.Quantity)
                     return (false, "Cannot remove or sell more than available stock.");
-                product.Quantity -= count;
+                product.Quantity -= count;*/
                 return (true, null);
 
             default:

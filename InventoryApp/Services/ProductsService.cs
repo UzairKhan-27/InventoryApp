@@ -56,8 +56,8 @@ public class ProductsService : IProductsService
         if (product == null || product.IsDeleted)
             return (false, $"Product with {id} not found");
 
-        if (product.Quantity > 0)
-            return (false, "Cannot delete product with remaining stock.");
+        /*if (product.Quantity > 0)
+            return (false, "Cannot delete product with remaining stock.");*/
 
         product.IsDeleted = true;
         product.UpdatedAt = DateTime.UtcNow;

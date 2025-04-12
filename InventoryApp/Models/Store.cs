@@ -1,13 +1,12 @@
 ﻿namespace InventoryApp.Models;
-
-public class Product
+public class Store
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; }
-    public int Price { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
-    public DateTime UpdatedAt { get; set; } = DateTime.Now;
+    public string Location { get; set; }
     public bool IsDeleted { get; set; } = false;
     public ICollection<StoreInventory> StoreInventory { get; set; }
     public ICollection<StockMovement> StockMovements { get; set; }
+
 }
+

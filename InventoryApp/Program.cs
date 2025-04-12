@@ -1,6 +1,9 @@
 using InventoryApp.Data;
 using InventoryApp.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +21,25 @@ builder.Services.AddScoped<IProductsService, ProductsService>();
 builder.Services.AddScoped<IStockMovementsService, StockMovementsService>();
 builder.Services.AddScoped<IStoresService, StoresService>();
 builder.Services.AddScoped<IStoreInventoriesService, StoreInventoriesService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "InventoryApp",
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes("YourSuperSecretKey1234567890123456"))
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 
 
@@ -34,7 +55,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

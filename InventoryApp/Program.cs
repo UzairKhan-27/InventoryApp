@@ -14,8 +14,12 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ProductContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<IProductsService,ProductsService>();
+builder.Services.AddScoped<IProductsService, ProductsService>();
 builder.Services.AddScoped<IStockMovementsService, StockMovementsService>();
+builder.Services.AddScoped<IStoresService, StoresService>();
+builder.Services.AddScoped<IStoreInventoriesService, StoreInventoriesService>();
+
+
 
 
 

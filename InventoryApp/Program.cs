@@ -22,6 +22,8 @@ builder.Services.AddScoped<IStockMovementsService, StockMovementsService>();
 builder.Services.AddScoped<IStoresService, StoresService>();
 builder.Services.AddScoped<IStoreInventoriesService, StoreInventoriesService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IAuditLogsService, AuditLogsService>();
+
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -9,10 +9,13 @@ namespace InventoryApp.Services;
 public class StockMovementsService : IStockMovementsService
 {
     private readonly ProductContext _context;
+    private readonly IAuditLogsService _auditLog;
 
-    public StockMovementsService(ProductContext context)
+
+    public StockMovementsService(ProductContext context, IAuditLogsService auditLog)
     {
         _context = context;
+        _auditLog = auditLog;
     }
 
     public async Task<List<StockMovement>> GetStockMovements(UserContext userContext)
@@ -47,56 +50,6 @@ public class StockMovementsService : IStockMovementsService
 
         throw new UnauthorizedAccessException("You are not authorized to view this stock movement.");
     }
-
-
-    /*public async Task<(bool IsSuccess, string? Message, StockMovement? Movement)> AddStockMovement(AddStockMovementDto dto)
-    {
-        var product = await _context.Products.FindAsync(dto.ProductId);
-        if (product == null || product.IsDeleted)
-            return (false, $"Product with ID {dto.ProductId} not found.", null);
-
-        if (dto.Count <= 0)
-            return (false, "Count must be greater than 0.", null);
-
-        var stockMovement = new StockMovement
-        {
-            ProductId = dto.ProductId,
-            Type = dto.Type,
-            Count = dto.Count
-        };
-
-        var (isValid, errorMessage) = HandleStockChange(product, dto.Type, dto.Count);
-        if (!isValid)
-            return (false, errorMessage, null);
-
-        product.UpdatedAt = DateTime.UtcNow;
-
-        await _context.StockMovements.AddAsync(stockMovement);
-        await _context.SaveChangesAsync();
-
-        return (true, null, stockMovement);
-    }*/
-
-    /*    private (bool IsValid, string? ErrorMessage) HandleStockChange(Product product, string type, int count)
-        {
-            switch (type)
-            {
-                case "stocked in":
-                    product.Quantity += count;
-                    return (true, null);
-
-                case "sold":
-                case "removed":
-                    if (count > product.Quantity)
-                        return (false, "Cannot remove or sell more than available stock.");
-                    product.Quantity -= count;
-                    return (true, null);
-
-                default:
-                    return (false, "Invalid stock movement type. Use 'stocked in', 'sold', or 'removed'.");
-            }
-        }
-    */
 
     public async Task<(bool isSuccess, string message, StockMovement? stockMovement)> AddStockMovement(AddStockMovementDto dto, UserContext userContext)
     {
@@ -145,6 +98,23 @@ public class StockMovementsService : IStockMovementsService
 
         await _context.StockMovements.AddAsync(stockMovement);
         await _context.SaveChangesAsync();
+
+        await _auditLog.LogChangeAsync(
+            entityName: "StockMovement",
+            entityId: stockMovement.Id,
+            action: "Add",
+            changedBy: userContext.UserId.ToString(),
+            details: $"StockMovement: {dto.Type} | ProductId: {dto.ProductId} | Count: {dto.Count} | StoreId: {dto.StoreId}"
+        );
+
+        await _auditLog.LogChangeAsync(
+            entityName: "StoreInventory",
+            entityId: storeInventory.StoreId,
+            action: "Update",
+            changedBy: userContext.UserId.ToString(),
+            details: $"Inventory updated after {dto.Type} | ProductId: {dto.ProductId} | New Quantity: {storeInventory.Quantity}"
+        );
+
 
         return (true, "Stock movement recorded successfully.", stockMovement);
     }

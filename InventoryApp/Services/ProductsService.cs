@@ -35,8 +35,13 @@ public class ProductsService : IProductsService
 
         await _context.Products.AddAsync(product);
         await _context.SaveChangesAsync();
-        await _auditLog.LogChangeAsync
-            ("Product", product.Id, "Add", changedBy, $"Added product: {product.Name}");
+        await _auditLog.LogChangeAsync(
+            entityName: "Product",
+            entityId: product.Id,
+            action: "Add",
+            changedBy: changedBy,
+            details: $"Added product: {product.Name}"
+        );
         return product;
     }
 
@@ -51,8 +56,13 @@ public class ProductsService : IProductsService
         product.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-        await _auditLog.LogChangeAsync
-            ("Product", product.Id, "Update", changedBy, $"Updated product: {product.Name}");
+        await _auditLog.LogChangeAsync(
+            entityName: "Product",
+            entityId: product.Id,
+            action: "Update",
+            changedBy: changedBy,
+            details: $"Updated product: {product.Name}"
+        );
         return product;
     }
 
@@ -65,8 +75,14 @@ public class ProductsService : IProductsService
         product.IsDeleted = true;
         product.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        await _auditLog.LogChangeAsync
-            ("Product", product.Id, "Delete", changedBy, $"Deleted product: {product.Name}");
+        await _auditLog.LogChangeAsync(
+            entityName: "Product",
+            entityId: product.Id,
+            action: "Delete",
+            changedBy: changedBy,
+            details: $"Deleted product: {product.Name}"
+        );
+
 
         return (true, $"Product with {id} deleted");
     }

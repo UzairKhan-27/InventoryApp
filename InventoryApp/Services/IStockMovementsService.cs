@@ -6,7 +6,6 @@ namespace InventoryApp.Services
 {
     public interface IStockMovementsService
     {
-        /*Task<(bool IsSuccess, string? Message, StockMovement? Movement)> AddStockMovement(AddStockMovementDto dto);*/
         Task<(bool isSuccess, string message, StockMovement? stockMovement)> AddStockMovement(AddStockMovementDto dto, UserContext userContext);
         Task<StockMovement?> GetStockMovement(Guid id, UserContext userContext);
         Task<List<StockMovement>> GetStockMovements(UserContext userContext);

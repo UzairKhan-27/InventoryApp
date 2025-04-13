@@ -61,7 +61,9 @@ public class StoresController : ControllerBase
     {
         try
         {
-            var store = await _service.AddStore(dto);
+            var userContext = new UserContext(User);
+            string changedBy = userContext.UserId.ToString();
+            var store = await _service.AddStore(dto, changedBy);
             return Ok(store);
         }
         catch (Exception ex)
@@ -69,12 +71,15 @@ public class StoresController : ControllerBase
             return StatusCode(500, "An error occurred while adding the store.");
         }
     }
+
     [HttpPut("{id}")]
     public async Task<ActionResult<Store>> UpdateStore(Guid id, [FromBody] UpdateStoreDto dto)
     {
         try
         {
-            var store = await _service.UpdateStore(id, dto);
+            var userContext = new UserContext(User);
+            string changedBy = userContext.UserId.ToString();
+            var store = await _service.UpdateStore(id, dto,changedBy);
             return store == null ? NotFound($"Store with ID {id} not found.") : Ok(store);
         }
         catch (Exception ex)
@@ -87,7 +92,9 @@ public class StoresController : ControllerBase
     {
         try
         {
-            var (isSuccess, message) = await _service.DeleteStore(id);
+            var userContext = new UserContext(User);
+            string changedBy = userContext.UserId.ToString();
+            var (isSuccess, message) = await _service.DeleteStore(id,changedBy);
             return isSuccess ? Ok(message) : BadRequest(message);
         }
         catch (Exception ex)

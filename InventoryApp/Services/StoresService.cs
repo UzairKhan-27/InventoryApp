@@ -8,10 +8,13 @@ namespace InventoryApp.Services;
 public class StoresService : IStoresService
 {
     private readonly ProductContext _context;
+    private readonly IAuditLogsService _auditLog;
 
-    public StoresService(ProductContext context)
+
+    public StoresService(ProductContext context, IAuditLogsService auditLog)
     {
         _context = context;
+        _auditLog = auditLog;
     }
 
     public async Task<List<Store>> GetAllStores()
@@ -36,7 +39,7 @@ public class StoresService : IStoresService
 
 
 
-    public async Task<Store> AddStore(AddStoreDto dto)
+    public async Task<Store> AddStore(AddStoreDto dto, string changedBy)
     {
         var store = new Store
         {
@@ -46,9 +49,16 @@ public class StoresService : IStoresService
 
         await _context.Stores.AddAsync(store);
         await _context.SaveChangesAsync();
+        await _auditLog.LogChangeAsync(
+            entityName: "Store",
+            entityId: store.Id,
+            action: "Add",
+            changedBy: changedBy,
+            details: $"Added store: {store.Name} at {store.Location}"
+        );
         return store;
     }
-    public async Task<Store?> UpdateStore(Guid id, UpdateStoreDto dto)
+    public async Task<Store?> UpdateStore(Guid id, UpdateStoreDto dto, string changedBy)
     {
         var store = await _context.Stores.FindAsync(id);
         if (store == null || store.IsDeleted)
@@ -58,9 +68,16 @@ public class StoresService : IStoresService
         store.Location = dto.Location;
 
         await _context.SaveChangesAsync();
+        await _auditLog.LogChangeAsync(
+           entityName: "Store",
+           entityId: store.Id,
+           action: "Update",
+           changedBy: changedBy,
+           details: $"Updated store: {store.Name} at {store.Location}"
+       );
         return store;
     }
-    public async Task<(bool IsSuccess, string Message)> DeleteStore(Guid id)
+    public async Task<(bool IsSuccess, string Message)> DeleteStore(Guid id, string changedBy)
     {
         var store = await _context.Stores.FindAsync(id);
         if (store == null || store.IsDeleted)
@@ -68,7 +85,13 @@ public class StoresService : IStoresService
 
         store.IsDeleted = true;
         await _context.SaveChangesAsync();
-
+        await _auditLog.LogChangeAsync(
+           entityName: "Store",
+           entityId: store.Id,
+           action: "Delete",
+           changedBy: changedBy,
+           details: $"Deleted store: {store.Name} at {store.Location}"
+       );
         return (true, $"Store with ID {id} deleted");
     }
 

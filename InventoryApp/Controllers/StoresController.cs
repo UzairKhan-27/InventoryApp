@@ -1,9 +1,12 @@
-﻿using InventoryApp.Models;
+﻿using InventoryApp.Helpers;
+using InventoryApp.Models;
 using InventoryApp.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InventoryApp.Controllers;
 
+[Authorize(Roles = "CentralAdmin")]
 [Route("api/[controller]")]
 [ApiController]
 public class StoresController : ControllerBase
@@ -29,21 +32,30 @@ public class StoresController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "CentralAdmin,StoreAdmin")]
     [HttpGet("{id}")]
     public async Task<ActionResult<Store>> GetStoreById(Guid id)
     {
         try
         {
-            var store = await _service.GetStore(id);
+            var userContext = new UserContext(User);
+            var store = await _service.GetStore(id, userContext);
+
             return store == null
                 ? NotFound($"Store with ID {id} not found.")
                 : Ok(store);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
         }
         catch (Exception ex)
         {
             return StatusCode(500, $"An error occurred while fetching the store: {ex.Message}");
         }
     }
+
+
     [HttpPost]
     public async Task<ActionResult<Store>> AddStore([FromBody] AddStoreDto dto)
     {

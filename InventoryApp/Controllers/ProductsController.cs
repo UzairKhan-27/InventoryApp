@@ -1,12 +1,14 @@
 ﻿using InventoryApp.Data;
 using InventoryApp.Models;
 using InventoryApp.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventoryApp.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class ProductsController : ControllerBase
@@ -45,6 +47,7 @@ public class ProductsController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "CentralAdmin")]
     [HttpPost]
     public async Task<ActionResult<Product>> AddProduct([FromBody] AddProductDto dto)
     {
@@ -59,6 +62,7 @@ public class ProductsController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "CentralAdmin")]
     [HttpPut("{id}")]
     public async Task<ActionResult<Product>> UpdateProduct(Guid id, [FromBody] UpdateProductDto dto)
     {
@@ -73,6 +77,7 @@ public class ProductsController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "CentralAdmin")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteProduct(Guid id)
     {

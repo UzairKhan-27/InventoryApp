@@ -1,4 +1,5 @@
 ﻿using InventoryApp.Data;
+using InventoryApp.Helpers;
 using InventoryApp.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,10 +19,22 @@ public class StoresService : IStoresService
         return await _context.Stores.Where(s => !s.IsDeleted).ToListAsync();
     }
 
-    public async Task<Store?> GetStore(Guid id)
+    public async Task<Store?> GetStore(Guid id, UserContext userContext)
     {
-        return await _context.Stores.FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+        if (userContext.IsCentralAdmin)
+        {
+            return await _context.Stores.FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+        }
+
+        if (userContext.IsStoreAdmin && userContext.StoreId == id)
+        {
+            return await _context.Stores.FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+        }
+
+        throw new UnauthorizedAccessException("You are not authorized to view this store.");
     }
+
+
 
     public async Task<Store> AddStore(AddStoreDto dto)
     {

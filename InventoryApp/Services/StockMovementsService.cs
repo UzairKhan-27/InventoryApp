@@ -1,6 +1,8 @@
 ﻿using InventoryApp.Data;
+using InventoryApp.Helpers;
 using InventoryApp.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace InventoryApp.Services;
 
@@ -13,15 +15,39 @@ public class StockMovementsService : IStockMovementsService
         _context = context;
     }
 
-    public async Task<List<StockMovement>> GetStockMovements()
+    public async Task<List<StockMovement>> GetStockMovements(UserContext userContext)
     {
-        return await _context.StockMovements.ToListAsync();
+        if (userContext.IsCentralAdmin)
+        {
+            return await _context.StockMovements.ToListAsync();
+        }
+        else if (userContext.IsStoreAdmin && userContext.StoreId.HasValue)
+        {
+            return await _context.StockMovements
+                .Where(sm => sm.StoreId == userContext.StoreId.Value)
+                .ToListAsync();
+        }
+
+        throw new UnauthorizedAccessException("Invalid role or missing store ID.");
     }
 
-    public async Task<StockMovement?> GetStockMovement(Guid id)
+
+
+    public async Task<StockMovement?> GetStockMovement(Guid id, UserContext userContext)
     {
-        return await _context.StockMovements.FindAsync(id);
+        var stockMovement = await _context.StockMovements.FindAsync(id);
+        if (stockMovement == null)
+            return null;
+
+        if (userContext.IsCentralAdmin)
+            return stockMovement;
+
+        if (userContext.IsStoreAdmin && userContext.StoreId.HasValue && stockMovement.StoreId == userContext.StoreId.Value)
+            return stockMovement;
+
+        throw new UnauthorizedAccessException("You are not authorized to view this stock movement.");
     }
+
 
     /*public async Task<(bool IsSuccess, string? Message, StockMovement? Movement)> AddStockMovement(AddStockMovementDto dto)
     {
@@ -72,8 +98,13 @@ public class StockMovementsService : IStockMovementsService
         }
     */
 
-    public async Task<(bool isSuccess, string message, StockMovement? stockMovement)> AddStockMovement(AddStockMovementDto dto)
+    public async Task<(bool isSuccess, string message, StockMovement? stockMovement)> AddStockMovement(AddStockMovementDto dto, UserContext userContext)
     {
+        if (!userContext.IsStoreAdmin || userContext.StoreId != dto.StoreId)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to perform this action for this store.");
+        }
+
         var countValidation = IsCountPositive(dto.Count);
         if (!countValidation.isValid)
             return (false, countValidation.message, null);
@@ -118,17 +149,21 @@ public class StockMovementsService : IStockMovementsService
         return (true, "Stock movement recorded successfully.", stockMovement);
     }
 
+
     public async Task<(bool found, string message, List<StockMovement> stockMovement)> GetFilteredStockMovements
-        (Guid? storeId, DateTime? startDate, DateTime? endDate)
+    (Guid? storeId, DateTime? startDate, DateTime? endDate, UserContext userContext)
     {
         var query = _context.StockMovements.AsQueryable();
 
+        if (userContext.IsStoreAdmin && storeId.HasValue && userContext.StoreId != storeId)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to view stock movements for this store.");
+        }
+
         if (storeId.HasValue)
             query = query.Where(sm => sm.StoreId == storeId.Value);
-
         if (startDate.HasValue)
             query = query.Where(sm => sm.Timestamp >= startDate.Value);
-
         if (endDate.HasValue)
             query = query.Where(sm => sm.Timestamp <= endDate.Value);
 
@@ -138,6 +173,8 @@ public class StockMovementsService : IStockMovementsService
             ? (false, "No stock movements found for the given filters.", results)
             : (true, "Stock movements retrieved successfully.", results);
     }
+
+
     private (bool isValid, string message) IsCountPositive(int count)
     {
         if (count <= 0)

@@ -7,10 +7,12 @@ namespace InventoryApp.Services;
 public class ProductsService : IProductsService
 {
     private readonly ProductContext _context;
+    private readonly IAuditLogsService _auditLog;
 
-    public ProductsService(ProductContext context)
+    public ProductsService(ProductContext context, IAuditLogsService auditLog)
     {
         _context = context;
+        _auditLog = auditLog;
     }
 
     public async Task<List<Product>> GetProducts()
@@ -23,7 +25,7 @@ public class ProductsService : IProductsService
         return await _context.Products.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
     }
 
-    public async Task<Product> AddProduct(AddProductDto dto)
+    public async Task<Product> AddProduct(AddProductDto dto, string changedBy)
     {
         var product = new Product
         {
@@ -33,10 +35,12 @@ public class ProductsService : IProductsService
 
         await _context.Products.AddAsync(product);
         await _context.SaveChangesAsync();
+        await _auditLog.LogChangeAsync
+            ("Product", product.Id, "Add", changedBy, $"Added product: {product.Name}");
         return product;
     }
 
-    public async Task<Product?> UpdateProduct(Guid id, UpdateProductDto dto)
+    public async Task<Product?> UpdateProduct(Guid id, UpdateProductDto dto, string changedBy)
     {
         var product = await _context.Products.FindAsync(id);
         if (product == null || product.IsDeleted)
@@ -47,21 +51,22 @@ public class ProductsService : IProductsService
         product.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+        await _auditLog.LogChangeAsync
+            ("Product", product.Id, "Update", changedBy, $"Updated product: {product.Name}");
         return product;
     }
 
-    public async Task<(bool IsSuccess, string Message)> DeleteProduct(Guid id)
+    public async Task<(bool success, string message)> DeleteProduct(Guid id, string changedBy)
     {
         var product = await _context.Products.FindAsync(id);
         if (product == null || product.IsDeleted)
             return (false, $"Product with {id} not found");
 
-        /*if (product.Quantity > 0)
-            return (false, "Cannot delete product with remaining stock.");*/
-
         product.IsDeleted = true;
         product.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
+        await _auditLog.LogChangeAsync
+            ("Product", product.Id, "Delete", changedBy, $"Deleted product: {product.Name}");
 
         return (true, $"Product with {id} deleted");
     }

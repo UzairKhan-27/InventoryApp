@@ -1,4 +1,5 @@
 ﻿using InventoryApp.Data;
+using InventoryApp.Helpers;
 using InventoryApp.Models;
 using InventoryApp.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -53,7 +54,11 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var product = await _service.AddProduct(dto);
+
+            var userContext = new UserContext(User);
+            string changedBy = userContext.UserId.ToString();
+            var product = await _service.AddProduct(dto, changedBy);
+
             return Ok(product);
         }
         catch (Exception ex)
@@ -68,7 +73,10 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var product = await _service.UpdateProduct(id, dto);
+            var userContext = new UserContext(User);
+            string changedBy = userContext.UserId.ToString();
+            var product = await _service.UpdateProduct(id, dto, changedBy);
+
             return product == null ? NotFound($"Product with {id} not found") : Ok(product);
         }
         catch (Exception ex)
@@ -83,8 +91,10 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var (isSuccess, message) = await _service.DeleteProduct(id);
-            return isSuccess ? Ok(message) : BadRequest(message);
+            var userContext = new UserContext(User);
+            string changedBy = userContext.UserId.ToString();
+            var (success, message) = await _service.DeleteProduct(id, changedBy);
+            return success ? Ok(message) : BadRequest(message);
         }
         catch (Exception ex)
         {

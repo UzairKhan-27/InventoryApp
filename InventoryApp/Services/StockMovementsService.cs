@@ -2,6 +2,7 @@
 using InventoryApp.Helpers;
 using InventoryApp.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.Security.Claims;
 
 namespace InventoryApp.Services;
@@ -10,30 +11,36 @@ public class StockMovementsService : IStockMovementsService
 {
     private readonly ProductContext _context;
     private readonly IAuditLogsService _auditLog;
+    private readonly IMemoryCache _cache;
 
 
-    public StockMovementsService(ProductContext context, IAuditLogsService auditLog)
+    public StockMovementsService(ProductContext context, IAuditLogsService auditLog, IMemoryCache cache)
     {
         _context = context;
         _auditLog = auditLog;
+        _cache = cache;
     }
 
     public async Task<List<StockMovement>> GetStockMovements(UserContext userContext)
     {
         if (userContext.IsCentralAdmin)
         {
-            return await _context.StockMovements.ToListAsync();
+            return await _cache.GetOrCreateAsync("stock_movements_all", entry =>
+            {
+                return _context.StockMovements.ToListAsync();
+            }) ?? new List<StockMovement>();
         }
         else if (userContext.IsStoreAdmin && userContext.StoreId.HasValue)
         {
-            return await _context.StockMovements
-                .Where(sm => sm.StoreId == userContext.StoreId.Value)
-                .ToListAsync();
+            var cacheKey = $"stock_movements_store_{userContext.StoreId.Value}";
+            return await _cache.GetOrCreateAsync(cacheKey, entry =>
+            {
+                return _context.StockMovements.Where(sm => sm.StoreId == userContext.StoreId.Value).ToListAsync();
+            }) ?? new List<StockMovement>();
         }
 
         throw new UnauthorizedAccessException("Invalid role or missing store ID.");
     }
-
 
 
     public async Task<StockMovement?> GetStockMovement(Guid id, UserContext userContext)
@@ -98,6 +105,11 @@ public class StockMovementsService : IStockMovementsService
 
         await _context.StockMovements.AddAsync(stockMovement);
         await _context.SaveChangesAsync();
+        _cache.Remove("stock_movements_all");
+        _cache.Remove($"stock_movements_store_{userContext.StoreId.Value}");
+        _cache.Remove($"store_inventories_all");
+        _cache.Remove($"store_inventories_store_{userContext.StoreId.Value}");
+
 
         await _auditLog.LogChangeAsync(
             entityName: "StockMovement",

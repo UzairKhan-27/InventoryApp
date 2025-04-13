@@ -2,6 +2,7 @@
 using InventoryApp.Helpers;
 using InventoryApp.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace InventoryApp.Services;
 
@@ -9,36 +10,41 @@ public class StoresService : IStoresService
 {
     private readonly ProductContext _context;
     private readonly IAuditLogsService _auditLog;
+    private readonly IMemoryCache _cache;
 
 
-    public StoresService(ProductContext context, IAuditLogsService auditLog)
+    public StoresService(ProductContext context, IAuditLogsService auditLog,IMemoryCache cache)
     {
         _context = context;
         _auditLog = auditLog;
+        _cache = cache;
     }
 
     public async Task<List<Store>> GetAllStores()
     {
-        return await _context.Stores.Where(s => !s.IsDeleted).ToListAsync();
+        var stores = await _cache.GetOrCreateAsync("stores_list", entry =>
+        {
+            return _context.Stores.Where(s => !s.IsDeleted).ToListAsync();
+        });
+
+        return stores ?? new List<Store>();
     }
 
     public async Task<Store?> GetStore(Guid id, UserContext userContext)
     {
-        if (userContext.IsCentralAdmin)
+        if (userContext.IsCentralAdmin || (userContext.IsStoreAdmin && userContext.StoreId == id))
         {
-            return await _context.Stores.FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
-        }
+            var store = await _cache.GetOrCreateAsync($"store_{id}", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return _context.Stores.Where(s => s.Id == id && !s.IsDeleted).FirstOrDefaultAsync();
+            });
 
-        if (userContext.IsStoreAdmin && userContext.StoreId == id)
-        {
-            return await _context.Stores.FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+            return store;
         }
 
         throw new UnauthorizedAccessException("You are not authorized to view this store.");
     }
-
-
-
     public async Task<Store> AddStore(AddStoreDto dto, string changedBy)
     {
         var store = new Store
@@ -49,6 +55,7 @@ public class StoresService : IStoresService
 
         await _context.Stores.AddAsync(store);
         await _context.SaveChangesAsync();
+        _cache.Remove("stores_list");
         await _auditLog.LogChangeAsync(
             entityName: "Store",
             entityId: store.Id,
@@ -68,6 +75,7 @@ public class StoresService : IStoresService
         store.Location = dto.Location;
 
         await _context.SaveChangesAsync();
+        _cache.Remove("stores_list");
         await _auditLog.LogChangeAsync(
            entityName: "Store",
            entityId: store.Id,
@@ -85,6 +93,7 @@ public class StoresService : IStoresService
 
         store.IsDeleted = true;
         await _context.SaveChangesAsync();
+        _cache.Remove("stores_list");
         await _auditLog.LogChangeAsync(
            entityName: "Store",
            entityId: store.Id,

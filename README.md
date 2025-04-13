@@ -72,4 +72,4 @@
 
 - **Swagger UI**  
   The API includes **Swagger UI** for auto-generated, interactive documentation. It simplifies exploration and testing of endpoints, improving the developer experience and reducing onboarding time.
-  ![Swagger UI Screenshot](./docs/images/api_design_1.png)
+  ![Swagger UI Screenshot](./docs/api_design_1.png)

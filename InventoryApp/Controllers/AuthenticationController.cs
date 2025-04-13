@@ -1,5 +1,6 @@
 ﻿using InventoryApp.Models;
 using InventoryApp.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -32,7 +33,7 @@ public class AuthenticationController : ControllerBase
         }
     }
 
-
+    [Authorize(Roles = "CentralAdmin")]
     [HttpPost("register")]
     public async Task<ActionResult> Register(RegisterDto dto)
     {

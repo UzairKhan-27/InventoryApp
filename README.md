@@ -5,57 +5,47 @@
 ## 📌 Design Decisions
 
 - **Layered Architecture**  
-  The solution is structured into clearly separated layers for better organization and scalability:
-  - **Controllers**: Thin controllers focus purely on HTTP handling and role-based access, delegating all logic to services.
-  - **Services**: All business logic is encapsulated in service classes, following the "thick service, thin controller" principle.
-  - **Interfaces**: Each service implements a corresponding interface (e.g., `IProductsService`, `ISuppliersService`) to support:
-    - Loose coupling
-    - Easy unit testing & mocking
-    - Plug-and-play flexibility (e.g., swap cache/db strategies)
-  - **DTOs (Data Transfer Objects)**: Explicitly define expected input/output shapes, avoiding over-posting and coupling to domain models.
-  - **Data Layer**: Uses **Entity Framework Core** with a **Code-First** approach for flexible schema management and clean database interaction.
+  The solution follows a clear layered structure for scalability and maintainability:
+  - **Controllers**: Thin, focused on HTTP handling and role-based access, delegating logic to services.
+  - **Services**: Encapsulate business logic following the "thick service, thin controller" principle.
+  - **Interfaces**: Ensure loose coupling, testability, and flexibility (e.g., swapping caching strategies).
+  - **DTOs**: Explicitly define input/output shapes to prevent over-posting and maintain separation from domain models.
+  - **Data Layer**: Uses **Entity Framework Core** with a **Code-First** approach for schema management and clean database interactions.
 
 - **Dependency Injection (DI)**  
-  ASP.NET Core's built-in DI container is leveraged to inject services, DbContext, caching, and audit logging components. This ensures:
-  - Decoupled components
-  - Greater modularity
-  - Improved testability and flexibility
+  ASP.NET Core's DI container enables decoupling of services, DbContext, caching, and logging components, ensuring modularity, testability, and flexibility.
 
 - **Caching**  
-  Frequently accessed data like supplier and product lists are cached using `IMemoryCache`, reducing unnecessary database reads and improving response times.
+  **IMemoryCache** is used to cache frequently accessed data (e.g., product and supplier lists), reducing database load and enhancing response times.
 
 - **Audit Logging**  
-  Every write operation (Add, Update, Delete) triggers an audit log entry with metadata — capturing who made what change and when, supporting traceability and compliance.
+  All state-changing operations (Add, Update, Delete) trigger audit log entries, supporting traceability and compliance with metadata.
 
 - **Soft Deletion**  
-  Entities are "deleted" via an `IsDeleted` flag instead of physical removal, allowing:
-  - Historical traceability
-  - Data recovery
-  - Better integrity in audit logs and foreign key references
+  Entities are soft-deleted with an `IsDeleted` flag, preserving data integrity, historical traceability, and foreign key references.
 
 - **Inventory via StockMovement Table**  
-  Stock quantity is **not stored directly on the Product**. Instead, all inventory levels are computed from the **StockMovement** table, which records every stock-in, stock-out, and transfer event. This design:
-  - Provides an **immutable audit trail** for all inventory changes
-  - Ensures **accurate, real-time stock levels** through aggregation
-  - Supports advanced features like stock reconciliation, reporting, and traceability
-  - Decouples product metadata from inventory flow for better **data integrity** and **business resilience**
+  Stock quantity is managed through the **StockMovement** table, ensuring:
+  - Immutable audit trail for inventory changes
+  - Real-time stock level accuracy
+  - Decoupling product data from inventory flow, enhancing data integrity and business resilience.
 
 - **Role-Based Authorization**  
-  Secured using `[Authorize(Roles = "...")]`:
+  Role-based access control using `[Authorize(Roles = "...")]`:
   - **CentralAdmin**: Full CRUD access
-  - **StoreAdmin**: Scoped access — can perform read and write operations limited to their **own store's** data.  
+  - **StoreAdmin**: Scoped access, limited to their own store’s data.
 
 - **Rate Limiting**  
-  Rate-limiting middleware is applied with separate policies:
-  - `ReadPolicy`: Allows frequent GETs
-  - `WritePolicy`: Tighter control over POST/PUT/DELETE  
+  Separate rate-limiting policies for:
+  - `ReadPolicy`: Frequent GETs
+  - `WritePolicy`: Control over POST/PUT/DELETE actions.
 
 - **Scalability & Best Practices**  
-  - Business logic is fully decoupled from the web framework.
-  - Interfaces provide abstraction and enable easy replacement, testing, and scaling.
-  - Thin controllers improve maintainability.
-  - DTOs support backward-compatible evolution.
-  - EF Core code-first keeps the database model in sync with the domain layer.
+  - Decoupled business logic.
+  - Interfaces for easy testing, replacement, and scalability.
+  - Thin controllers, ensuring maintainability.
+  - EF Core code-first approach for database consistency with domain models.
+
 
 ## ✅ Assumptions
 

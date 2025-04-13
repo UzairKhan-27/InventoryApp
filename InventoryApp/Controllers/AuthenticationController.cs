@@ -34,7 +34,7 @@ public class AuthenticationController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "CentralAdmin")]
+    //Allowing anyone to register for development purpose
     [HttpPost("register")]
     public async Task<ActionResult> Register(RegisterDto dto)
     {

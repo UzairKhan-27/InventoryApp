@@ -3,6 +3,7 @@ using InventoryApp.Models;
 using InventoryApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace InventoryApp.Controllers;
 
@@ -19,6 +20,7 @@ public class StoresController : ControllerBase
     }
 
     [HttpGet]
+    [EnableRateLimiting("ReadPolicy")]
     public async Task<ActionResult<List<Store>>> GetAllStores()
     {
         try
@@ -33,6 +35,7 @@ public class StoresController : ControllerBase
     }
 
     [Authorize(Roles = "CentralAdmin,StoreAdmin")]
+    [EnableRateLimiting("ReadPolicy")]
     [HttpGet("{id}")]
     public async Task<ActionResult<Store>> GetStoreById(Guid id)
     {
@@ -57,6 +60,7 @@ public class StoresController : ControllerBase
 
 
     [HttpPost]
+    [EnableRateLimiting("WritePolicy")]
     public async Task<ActionResult<Store>> AddStore([FromBody] AddStoreDto dto)
     {
         try
@@ -73,6 +77,7 @@ public class StoresController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [EnableRateLimiting("WritePolicy")]
     public async Task<ActionResult<Store>> UpdateStore(Guid id, [FromBody] UpdateStoreDto dto)
     {
         try
@@ -88,6 +93,7 @@ public class StoresController : ControllerBase
         }
     }
     [HttpDelete("{id}")]
+    [EnableRateLimiting("WritePolicy")]
     public async Task<ActionResult> DeleteStore(Guid id)
     {
         try

@@ -3,6 +3,7 @@ using InventoryApp.Models;
 using InventoryApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 [Authorize]
 [Route("api/[controller]")]
@@ -16,6 +17,7 @@ public class StockMovementsController : ControllerBase
     }
 
     [HttpGet]
+    [EnableRateLimiting("ReadPolicy")]
     public async Task<ActionResult<List<StockMovement>>> GetStockMovements()
     {
         try
@@ -37,6 +39,7 @@ public class StockMovementsController : ControllerBase
 
 
     [HttpGet("{id}")]
+    [EnableRateLimiting("ReadPolicy")]
     public async Task<ActionResult<StockMovement>> GetStockMovement(Guid id)
     {
         try
@@ -59,6 +62,7 @@ public class StockMovementsController : ControllerBase
     }
 
 
+    [EnableRateLimiting("WritePolicy")]
     [HttpPost]
     public async Task<ActionResult<StockMovement>> AddStockMovement([FromBody] AddStockMovementDto dto)
     {
@@ -80,6 +84,7 @@ public class StockMovementsController : ControllerBase
     }
 
     [HttpGet("filter")]
+    [EnableRateLimiting("ReadPolicy")]
     public async Task<ActionResult<List<StockMovement>>> GetFilteredStockMovements
     ([FromQuery] Guid? storeId, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
     {

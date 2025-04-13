@@ -5,6 +5,7 @@ using InventoryApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventoryApp.Controllers;
@@ -21,6 +22,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
+    [EnableRateLimiting("ReadPolicy")]
     public async Task<ActionResult<List<Product>>> GetProducts()
     {
         try
@@ -35,6 +37,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [EnableRateLimiting("ReadPolicy")]
     public async Task<ActionResult<Product>> GetProduct(Guid id)
     {
         try
@@ -49,6 +52,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize(Roles = "CentralAdmin")]
+    [EnableRateLimiting("WritePolicy")]
     [HttpPost]
     public async Task<ActionResult<Product>> AddProduct([FromBody] AddProductDto dto)
     {
@@ -68,6 +72,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize(Roles = "CentralAdmin")]
+    [EnableRateLimiting("WritePolicy")]
     [HttpPut("{id}")]
     public async Task<ActionResult<Product>> UpdateProduct(Guid id, [FromBody] UpdateProductDto dto)
     {
@@ -86,6 +91,7 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize(Roles = "CentralAdmin")]
+    [EnableRateLimiting("WritePolicy")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteProduct(Guid id)
     {

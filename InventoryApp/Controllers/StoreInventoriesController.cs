@@ -3,6 +3,7 @@ using InventoryApp.Models;
 using InventoryApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace InventoryApp.Controllers;
 
@@ -19,6 +20,7 @@ public class StoreInventoriesController : ControllerBase
     }
     
     [HttpGet]
+    [EnableRateLimiting("ReadPolicy")]
     public async Task<ActionResult<List<StoreInventory>>> GetStoreInventories()
     {
         try
@@ -39,6 +41,7 @@ public class StoreInventoriesController : ControllerBase
 
 
     [HttpGet("{storeId}/{productId}")]
+    [EnableRateLimiting("ReadPolicy")]
     public async Task<ActionResult<StoreInventory>> GetStoreInventory(Guid storeId, Guid productId)
     {
         try
@@ -62,6 +65,7 @@ public class StoreInventoriesController : ControllerBase
 
 
     [HttpGet("store/{storeId}")]
+    [EnableRateLimiting("ReadPolicy")]
     public async Task<ActionResult<List<StoreInventory>>> GetInventoryByStore(Guid storeId)
     {
         try

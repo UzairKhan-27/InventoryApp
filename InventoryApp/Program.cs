@@ -8,30 +8,25 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-// Add Rate Limiting middleware
 builder.Services.AddRateLimiter(options =>
 {
-    // Higher rate limit for GET (Read operations)
     options.AddPolicy<string>("ReadPolicy", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: "read-global", // same key for everyone
+            partitionKey: "read-global",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 1,
+                PermitLimit = 100,
                 Window = TimeSpan.FromSeconds(3),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0
             }));
 
-    // Lower rate limit for POST/PUT/DELETE (Write operations)
     options.AddPolicy<string>("WritePolicy", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: "write-global", // same key for everyone
+            partitionKey: "write-global", 
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 1,
+                PermitLimit = 100,
                 Window = TimeSpan.FromSeconds(5),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0
@@ -40,11 +35,7 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = 429;
 });
 
-
-
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -57,8 +48,6 @@ builder.Services.AddScoped<IStoresService, StoresService>();
 builder.Services.AddScoped<IStoreInventoriesService, StoreInventoriesService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IAuditLogsService, AuditLogsService>();
-
-
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -77,13 +66,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-
-
-
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

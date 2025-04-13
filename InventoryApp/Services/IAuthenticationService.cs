@@ -6,6 +6,6 @@ namespace InventoryApp.Services
     {
         string GenerateJwtToken(User user);
         Task<(bool success, string? token, string message)> Login(string username, string password);
-        Task<(bool success, string message)> Register(string username, string password, string role, Guid? storeId);
+        Task<(bool success, string message)> Register(string username, string password, string role, Guid? storeId, string changedBy);
     }
 }

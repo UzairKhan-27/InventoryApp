@@ -12,13 +12,15 @@ namespace InventoryApp.Services;
 public class AuthenticationService : IAuthenticationService
 {
     private readonly ProductContext _context;
+    private readonly IAuditLogsService _auditLog;
 
-    public AuthenticationService(ProductContext context)
+    public AuthenticationService(ProductContext context, IAuditLogsService auditLog)
     {
         _context = context;
+        _auditLog = auditLog;
     }
 
-    public async Task<(bool success, string message)> Register(string username, string password, string role, Guid? storeId)
+    public async Task<(bool success, string message)> Register(string username, string password, string role, Guid? storeId, string changedBy)
     {
         if (await _context.Users.AnyAsync(u => u.Username == username))
         {
@@ -49,7 +51,13 @@ public class AuthenticationService : IAuthenticationService
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
-
+        await _auditLog.LogChangeAsync(
+            entityName: "User",
+            entityId: user.Id,
+            action: "Register",
+            changedBy: changedBy,
+            details: $"Registered user: {user.Username}, Role: {user.Role}, Store ID: {user.StoreId?.ToString() ?? "N/A"}"
+        );
         return (true, "User registered successfully.");
     }
 
@@ -61,6 +69,13 @@ public class AuthenticationService : IAuthenticationService
             return (false, null, "Invalid credentials");
 
         var token = GenerateJwtToken(user);
+        await _auditLog.LogChangeAsync(
+            entityName: "User",
+            entityId: user.Id,
+            action: "Login",
+            changedBy: user.Id.ToString(),
+            details: $"User {username} logged in successfully."
+        );
         return (true, token, "Login successful");
     }
 

@@ -1,4 +1,5 @@
-﻿using InventoryApp.Models;
+﻿using InventoryApp.Helpers;
+using InventoryApp.Models;
 using InventoryApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -39,7 +40,9 @@ public class AuthenticationController : ControllerBase
     {
         try
         {
-            var (success, message) = await _service.Register(dto.Username, dto.Password, dto.Role, dto.StoreId);
+            var userContext = new UserContext(User);
+            string changedBy = userContext.UserId.ToString();
+            var (success, message) = await _service.Register(dto.Username, dto.Password, dto.Role, dto.StoreId, changedBy);
             if (!success) 
                 return BadRequest(message);
 

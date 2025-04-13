@@ -12,6 +12,8 @@ public class ProductContext : DbContext
     public DbSet<StockMovement> StockMovements { get; set; }
     public DbSet<Store> Stores { get; set; }
     public DbSet<StoreInventory> StoreInventories { get; set; }
+    public DbSet<Supplier> Suppliers { get; set; }
+
     public DbSet<User> Users { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
 
@@ -19,11 +21,9 @@ public class ProductContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Optional: Composite key config (if needed)
         modelBuilder.Entity<StoreInventory>()
             .HasKey(si => new { si.StoreId, si.ProductId });
 
-        // Optional: Relationship setup
         modelBuilder.Entity<StoreInventory>()
             .HasOne(si => si.Store)
             .WithMany(s => s.StoreInventory)
@@ -43,6 +43,12 @@ public class ProductContext : DbContext
             .HasOne(sm => sm.Product)
             .WithMany(p => p.StockMovements)
             .HasForeignKey(sm => sm.ProductId);
+
+        modelBuilder.Entity<Product>()
+            .HasOne(p => p.Supplier)
+            .WithMany(s => s.Products)
+            .HasForeignKey(p => p.SupplierId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
 

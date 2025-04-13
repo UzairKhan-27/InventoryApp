@@ -39,12 +39,18 @@ public class ProductsService : IProductsService
     }
 
 
-    public async Task<Product> AddProduct(AddProductDto dto, string changedBy)
+    public async Task<Product?> AddProduct(AddProductDto dto, string changedBy)
     {
+
+        var supplierExists = await _context.Suppliers.AnyAsync(s => s.Id == dto.SupplierId && !s.IsDeleted);
+        if (!supplierExists)
+            return null;
+
         var product = new Product
         {
             Name = dto.Name,
-            Price = dto.Price
+            Price = dto.Price,
+            SupplierId = dto.SupplierId
         };
 
         await _context.Products.AddAsync(product);
@@ -64,6 +70,10 @@ public class ProductsService : IProductsService
     {
         var product = await _context.Products.FindAsync(id);
         if (product == null || product.IsDeleted)
+            return null;
+
+        var supplierExists = await _context.Suppliers.AnyAsync(s => s.Id == dto.SupplierId && !s.IsDeleted);
+        if (!supplierExists)
             return null;
 
         product.Name = dto.Name;

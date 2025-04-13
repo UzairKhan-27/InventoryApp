@@ -63,6 +63,8 @@ public class ProductsController : ControllerBase
             var userContext = new UserContext(User);
             string changedBy = userContext.UserId.ToString();
             var product = await _service.AddProduct(dto, changedBy);
+            if (product == null)
+                return BadRequest("Supplier not found or is deleted.");
 
             return Ok(product);
         }
@@ -83,7 +85,7 @@ public class ProductsController : ControllerBase
             string changedBy = userContext.UserId.ToString();
             var product = await _service.UpdateProduct(id, dto, changedBy);
 
-            return product == null ? NotFound($"Product with {id} not found") : Ok(product);
+            return product == null ? NotFound($"Product with {id} not found or Invalid Supplier") : Ok(product);
         }
         catch (Exception ex)
         {

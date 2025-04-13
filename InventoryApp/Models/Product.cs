@@ -9,7 +9,11 @@ public class Product
     public int Price { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public Guid SupplierId { get; set; }
+
     public bool IsDeleted { get; set; } = false;
+    [JsonIgnore]
+    public Supplier Supplier { get; set; }
     [JsonIgnore]
     public ICollection<StoreInventory> StoreInventory { get; set; }
     [JsonIgnore]

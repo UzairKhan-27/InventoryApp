@@ -80,7 +80,7 @@ This system evolved in **deliberate, scalable steps** — not by just adding fea
 Began with a simple CLI/API setup to **validate the core domain model**: how stock flows in/out and how to track it over time.
 
 **Key Design Reasoning:**
-- Stock wasn’t stored directly in the product — I opted to compute it from a separate `StockMovement` log to **ensure auditability from Day 1**.
+- Stock is not stored directly in the product. Instead, I opted to **compute stock levels dynamically from the `StockMovement` table**. This approach ensures a robust system from day one, where every stock-in, stock-out, and removal is tracked as an event.
 - Used local storage to allow fast prototyping without infra overhead.
 - Kept the system minimal to focus on **correctness, not complexity**.
 
